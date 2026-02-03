@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './Projects.css';
+import Modal from './Modal';
+import invManagerImg from '../assets/invManager.webp';
+import adminDashboardImg from '../assets/adminDashboard.webp';
+import loadingImg from '../assets/loading.webp';
 
 const Projects = () => {
   const [selectedProject, setSelectedProject] = useState(null);
@@ -11,7 +15,7 @@ const Projects = () => {
       title: "Inventory Management System",
       description: "inventory management app for warehouses and factories that tracks stock levels, item movements, and receipts, with PDF receipt generation and date-based tracking.",
       moreDetails: "Features: real‑time inventory synchronization, receipts managment, PDF receipt generation, date‑based tracking, and user roles for staff management. Test account: test@test.com - password: testpass",
-      image: "/assets/invManager.webp",
+      image: invManagerImg,
       tech: ["React", "Node.js", "Firebase", "Stripe"],
       category: "Web Application",
       link: "https://afko-inventory.web.app/"
@@ -21,7 +25,7 @@ const Projects = () => {
       title: "QR Ordering — Direct Orders to Kitchen",
       description: "A contactless QR ordering system that lets diners place orders from their phones, routing orders directly to the kitchen in real time with faster service and reduced staff workload.",
       moreDetails: "Designed for restaurants to reduce wait times: scan QR, browse menu, place order, and send it immediately to kitchen displays with order tracking and menu management. (Work in progress)",
-      image: "/assets/loading.webp",
+      image: loadingImg,
       tech: ["React", "Node.js", "Supabase", "Vite"],
       category: "Web Application",
       link: "#"
@@ -31,7 +35,7 @@ const Projects = () => {
       title: "Admin Dashboard",
       description: "A React-based admin dashboard for managing users and orders, with role-based access, real-time analytics, detailed system monitoring, reporting tools, and operational insights.",
       moreDetails: "Provides role‑based access, live charts, user management, and detailed activity logs to help admins maintain system performance.",
-      image: "/assets/adminDashboard.webp",
+      image: adminDashboardImg,
       tech: ["React", "Typescript", "Redux", "Node.js"],
       category: "Dashboard",
       link: "https://sav-admin-dashboard.web.app/"
@@ -78,6 +82,57 @@ const Projects = () => {
   const closeModal = () => {
     setSelectedProject(null);
   };
+
+  useEffect(() => {
+    if (selectedProject) {
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+      // Lock body scroll by fixing position and preserving scroll offset
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.body.style.overflow = 'hidden';
+      document.body.dataset.modalScrollY = String(scrollY);
+    } else {
+      const scrollY = document.body.dataset.modalScrollY;
+      if (scrollY !== undefined) {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.overflow = '';
+        // Temporarily disable smooth scrolling to avoid animated jump from top
+        const prevScrollBehavior = document.documentElement.style.scrollBehavior;
+        document.documentElement.style.scrollBehavior = 'auto';
+        window.scrollTo(0, parseInt(scrollY || '0', 10));
+        // Restore previous scroll behavior on next frame
+        requestAnimationFrame(() => {
+          document.documentElement.style.scrollBehavior = prevScrollBehavior;
+        });
+        delete document.body.dataset.modalScrollY;
+      }
+    }
+
+    return () => {
+      // Cleanup in case component unmounts while modal open
+      const scrollY = document.body.dataset.modalScrollY;
+      if (scrollY !== undefined) {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.overflow = '';
+        // Temporarily disable smooth scrolling to avoid animated jump from top
+        const prevScrollBehavior = document.documentElement.style.scrollBehavior;
+        document.documentElement.style.scrollBehavior = 'auto';
+        window.scrollTo(0, parseInt(scrollY || '0', 10));
+        requestAnimationFrame(() => {
+          document.documentElement.style.scrollBehavior = prevScrollBehavior;
+        });
+        delete document.body.dataset.modalScrollY;
+      }
+    };
+  }, [selectedProject]);
 
   return (
     <section className="projects" id="projects">
@@ -148,39 +203,41 @@ const Projects = () => {
 
         <AnimatePresence>
           {selectedProject && (
-            <motion.div
-              className="modal-overlay"
-              variants={overlayVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              onClick={closeModal}
-            >
+            <Modal>
               <motion.div
-                className="modal-content"
-                variants={modalVariants}
+                className="projects-modal-overlay"
+                variants={overlayVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                onClick={(e) => e.stopPropagation()}
+                onClick={closeModal}
               >
-                <button className="modal-close" onClick={closeModal} aria-label="Close">×</button>
+                <motion.div
+                  className="projects-modal-content"
+                  variants={modalVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button className="modal-close" onClick={closeModal} aria-label="Close">×</button>
 
-                <div className="modal-header">
-                  <h3 className="modal-title">{selectedProject.title}</h3>
-                  <p className="modal-category">{selectedProject.category} • {selectedProject.tech.join(', ')}</p>
-                </div>
-
-                <div className="modal-body">
-                  <img src={selectedProject.image} alt={selectedProject.title} className="modal-image" />
-                  <div className="modal-details">
-                    <p>{selectedProject.moreDetails}</p>
-                    <a href={selectedProject.link} target="_blank" rel="noreferrer" className="view-project-btn">Live View</a>
+                  <div className="modal-header">
+                    <h3 className="modal-title">{selectedProject.title}</h3>
+                    <p className="modal-category">{selectedProject.category} • {selectedProject.tech.join(', ')}</p>
                   </div>
-                </div>
+
+                  <div className="modal-body">
+                    <img src={selectedProject.image} alt={selectedProject.title} className="modal-image" />
+                    <div className="modal-details">
+                      <p>{selectedProject.moreDetails}</p>
+                      <a href={selectedProject.link} target="_blank" rel="noreferrer" className="view-project-btn">Live View</a>
+                    </div>
+                  </div>
+                </motion.div>
               </motion.div>
-            </motion.div>
+            </Modal>
           )}
         </AnimatePresence>
 

@@ -7,7 +7,7 @@ const About = () => {
     { label: "Projects Completed", value: "50+" },
     { label: "Technologies Mastered", value: "20+" },
     { label: "Code Commits", value: "5000+" },
-    { label: "Years Coding", value: "8+" }
+    { label: "Years Coding", value: new Date().getFullYear() - 2019 + "+" },
   ];
 
   return (
